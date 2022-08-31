@@ -139,9 +139,8 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     dt, seen = [0.0, 0.0, 0.0], 0
     totaltime = 0
     for path, im, im0s, vid_cap, s in dataset:
-
-        gain = min(im.shape[1] / im0s.shape[0], im.shape[2] / im0s.shape[1])  # gain  = old / new
-        pad = (im.shape[2] - im0s.shape[1] * gain) / 2, (im.shape[1] - im0s.shape[0] * gain) / 2  # wh padding
+        gain = min(im.shape[1] / im0s[0].shape[0], im.shape[2] / im0s[0].shape[1])  # gain  = old / new
+        pad = (im.shape[2] - im0s[0].shape[1] * gain) / 2, (im.shape[1] - im0s[0].shape[0] * gain) / 2  # wh padding
 
         t1 = time_sync()
         im = torch.from_numpy(im).to(device)
@@ -169,10 +168,11 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         mask = mask.detach().cpu().numpy()
         mask = mask.astype(np.uint8)
         oldshape = mask.shape
-        mask = mask[int(pad[1]):int(oldshape[0]-pad[1]), int(pad[0]):int(oldshape[1]-pad[0])]
+        #mask = mask[int(pad[1]):int(oldshape[0]-pad[1]), int(pad[0]):int(oldshape[1]-pad[0])]
         # mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
         pred_color = colorEncode(mask, colorsmap).astype(np.uint8)
         # mask = mask*20
+        cv2.imshow('mask',pred_color)
       #  cv2.imwrite("mask.jpg",pred_color)
         t3 = time_sync()
         dt[1] += t3 - t2
@@ -278,14 +278,14 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'runs/train/exp86/weights/last.pt', help='model path(s)')
-    parser.add_argument('--source', type=str, default='VOC/seg/images/val', help='file/dir/URL/glob, 0 for webcam')
+    parser.add_argument('--weights', nargs='+', type=str, default='weights/yolodsvoc.pt', help='model path(s)')
+    parser.add_argument('--source', type=str, default='0', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[512], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='NMS IoU threshold')
     parser.add_argument('--max-det', type=int, default=1000, help='maximum detections per image')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
-    parser.add_argument('--view-img', action='store_true', help='show results')
+    parser.add_argument('--view-img', action='store_true',default=True, help='show results')
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
     parser.add_argument('--save-crop', action='store_true', help='save cropped prediction boxes')
